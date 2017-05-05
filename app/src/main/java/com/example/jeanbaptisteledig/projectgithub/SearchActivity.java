@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
 public class SearchActivity extends AppCompatActivity {
@@ -15,13 +17,33 @@ public class SearchActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
-    public void sendRequest (View view) {
+    public void sendRequestRepositories (View view) {
         Intent intent = new Intent(this, ResultSearchActivity.class);
-        EditText editText = (EditText) findViewById(R.id.editText);
+        EditText editText = (EditText) findViewById(R.id.editTextRepo);
         String search = editText.getText().toString();
-        intent.putExtra(EXTRA_MESSAGE, search);
+        intent.putExtra("SearchRepo", search);
         startActivity(intent);
+    }
+
+    public void sendRequestUsers (View view) {
+        Intent intent = new Intent(this, ResultSearchActivity.class);
+        EditText editTextUser = (EditText) findViewById(R.id.editTextUser);
+        String searchUser = editTextUser.getText().toString();
+        intent.putExtra("SearchUser", searchUser);
+        startActivity(intent);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
