@@ -74,11 +74,6 @@ public class UsersActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            // Showing progress dialog
-            pDialog = new ProgressDialog(UsersActivity.this);
-            pDialog.setMessage("Please wait...");
-            pDialog.setCancelable(false);
-            pDialog.show();
         }
 
         @Override
@@ -134,9 +129,6 @@ public class UsersActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
-            // Dismiss the progress dialog
-            if (pDialog.isShowing())
-                pDialog.dismiss();
 
             TextView textView = (TextView) findViewById(R.id.textViewName);
             TextView textViewDescription = (TextView) findViewById(R.id.textViewDescription);
@@ -173,29 +165,27 @@ public class UsersActivity extends AppCompatActivity {
 
             // Making a request to url and getting response
             String jsonStr = sh.callAPI(urlRepo);
-            Log.e(TAG, "doInBackground: " + jsonStr );
 
             if (jsonStr != null) {
                 try {
-                    //JSONstr to JSONobj
-                    JSONObject jsonObj = new JSONObject(jsonStr);
-
-                    // Getting JSON Array node
-                    JSONArray items = jsonObj.getJSONArray("items");
+                    //jsonStr to JsonArray
+                    JSONArray items = new JSONArray(jsonStr);
 
                     //Looping through all items
                     for (int i = 0; i < items.length(); i++) {
                         JSONObject c = items.getJSONObject(i);
 
-                        String id = c.getString("id");
-                        String name = c.getString("name");
                         String full_name = c.getString("full_name");
+                        String description = c.getString("description");
+                        String language = c.getString("language");
+                        String url = c.getString("url");
 
                         HashMap<String, String> item = new HashMap<>();
 
-                        item.put("id", id);
-                        item.put("name", name);
                         item.put("full_name", full_name);
+                        item.put("description", description);
+                        item.put("language", language);
+                        item.put("url", url);
 
                         apiList.add(item);
                     }
@@ -233,6 +223,27 @@ public class UsersActivity extends AppCompatActivity {
             // Dismiss the progress dialog
             if (pDialog.isShowing())
                 pDialog.dismiss();
+
+            ListAdapter adapter = new SimpleAdapter(
+                    UsersActivity.this, apiList,
+                    R.layout.list_item, new String[]{"full_name", "description", "language", "url"}, new int[]{R.id.textViewFullName, R.id.textViewDescription, R.id.textViewLanguage, R.id.textViewUrl});
+            lv.setAdapter(adapter);
+
+            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                String url = ((TextView) view.findViewById(R.id.textViewUrl)).getText().toString();
+                String full_name = ((TextView) view.findViewById(R.id.textViewFullName)).getText().toString();
+
+                Toast toast = Toast.makeText(getApplicationContext(), full_name, Toast.LENGTH_SHORT);
+                toast.show();
+
+                Intent intent = new Intent(UsersActivity.this, RepositoriesActivity.class);
+                intent.putExtra("url", url);
+                startActivity(intent);
+                }
+            });
         }
     }
 }

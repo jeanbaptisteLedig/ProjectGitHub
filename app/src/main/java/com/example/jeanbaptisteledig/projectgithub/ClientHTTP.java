@@ -1,5 +1,6 @@
 package com.example.jeanbaptisteledig.projectgithub;
 
+import android.util.Base64;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -11,6 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
 
 /**
  * Created by jeanbaptiste.ledig on 25/04/2017.
@@ -63,5 +65,36 @@ public class ClientHTTP {
             }
         }
         return sb.toString();
+    }
+
+    public String postAPI(String username, String password, String url) {
+        String response = null;
+
+        try {
+            URL urlCould = new URL(url);
+            String userpass = username + ":" + password;
+            String basicUserpass = "Basic " + new String(Base64.encode(userpass.getBytes(), Base64.DEFAULT));
+            HttpURLConnection conn = (HttpURLConnection) urlCould.openConnection();
+            conn.setRequestMethod("GET");
+
+            if (username != null){
+                conn.setRequestProperty("Authorization", basicUserpass);
+            }
+
+            conn.connect();
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            response = convertStreamToString(in);
+
+        } catch (MalformedURLException e) {
+            Log.e(TAG, "MalformedURLException: " + e.getMessage());
+        } catch (ProtocolException e) {
+            Log.e(TAG, "ProtocolException: " + e.getMessage());
+        } catch (IOException e) {
+            Log.e(TAG, "IOException: " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "Exception: " + e.getMessage());
+        }
+        return response;
     }
 }

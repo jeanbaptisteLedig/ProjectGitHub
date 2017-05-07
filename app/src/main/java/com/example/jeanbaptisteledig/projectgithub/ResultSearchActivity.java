@@ -105,23 +105,19 @@ public class ResultSearchActivity extends AppCompatActivity {
                     for (int i = 0; i < items.length(); i++) {
                         JSONObject c = items.getJSONObject(i);
 
-                        String id = c.getString("id");
-                        String name = c.getString("name");
                         String full_name = c.getString("full_name");
                         String description = c.getString("description");
+                        String language = c.getString("language");
+                        String url = c.getString("url");
 
-                        JSONObject owner = c.getJSONObject("owner");
-                        String login = owner.getString("login");
-                        String avatar_url = owner.getString("avatar_url");
+                        //JSONObject owner = c.getJSONObject("owner");
 
                         HashMap<String, String> item = new HashMap<>();
 
-                        item.put("id", id);
-                        item.put("name", name);
                         item.put("full_name", full_name);
-                        item.put("login", login);
                         item.put("description", description);
-                        item.put("avatar_url", avatar_url);
+                        item.put("language", language);
+                        item.put("url", url);
 
                         apiList.add(item);
                     }
@@ -164,7 +160,7 @@ public class ResultSearchActivity extends AppCompatActivity {
              * */
             ListAdapter adapter = new SimpleAdapter(
                     ResultSearchActivity.this, apiList,
-                    R.layout.list_item, new String[]{"login", "name", "full_name", "description", "avatar_url"}, new int[]{R.id.login, R.id.name, R.id.full_name, R.id.description, R.id.avatar_url});
+                    R.layout.list_item, new String[]{"full_name", "description", "language", "url"}, new int[]{R.id.textViewFullName, R.id.textViewDescription, R.id.textViewLanguage, R.id.textViewUrl});
 
             lv.setAdapter(adapter);
 
@@ -172,19 +168,14 @@ public class ResultSearchActivity extends AppCompatActivity {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                    String name = ((TextView) view.findViewById(R.id.name)).getText().toString();
-                    String full_name = ((TextView) view.findViewById(R.id.full_name)).getText().toString();
-                    String description = ((TextView) view.findViewById(R.id.description)).getText().toString();
-                    String avatar_url = ((TextView) view.findViewById(R.id.avatar_url)).getText().toString();
+                    String url = ((TextView) view.findViewById(R.id.textViewUrl)).getText().toString();
+                    String full_name = ((TextView) view.findViewById(R.id.textViewFullName)).getText().toString();
 
-                    Toast toast = Toast.makeText(getApplicationContext(), "Hello", Toast.LENGTH_SHORT);
+                    Toast toast = Toast.makeText(getApplicationContext(), "Go to : " + full_name, Toast.LENGTH_SHORT);
                     toast.show();
 
                     Intent intent = new Intent(ResultSearchActivity.this, RepositoriesActivity.class);
-                    intent.putExtra("name", name);
-                    intent.putExtra("full_name", full_name);
-                    intent.putExtra("description", description);
-                    intent.putExtra("avatar_url", avatar_url);
+                    intent.putExtra("url", url);
                     startActivity(intent);
                 }
             });
@@ -250,7 +241,6 @@ public class ResultSearchActivity extends AppCompatActivity {
                                     .show();
                         }
                     });
-
                 }
             } else {
                 Log.e(TAG, "Couldn't get json from server.");
@@ -278,14 +268,14 @@ public class ResultSearchActivity extends AppCompatActivity {
              * */
             ListAdapter adapter = new SimpleAdapter(
                     ResultSearchActivity.this, apiList,
-                    R.layout.list_item, new String[]{"login", "url", "avatar_url"}, new int[]{R.id.login, R.id.full_name, R.id.avatar_url});
+                    R.layout.list_item_users, new String[]{"login"}, new int[]{R.id.textViewLogin});
             lv.setAdapter(adapter);
 
             lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                    String login = ((TextView) view.findViewById(R.id.login)).getText().toString();
+                    String login = ((TextView) view.findViewById(R.id.textViewLogin)).getText().toString();
 
                     Toast toast = Toast.makeText(getApplicationContext(), "Go to : " + login, Toast.LENGTH_SHORT);
                     toast.show();
