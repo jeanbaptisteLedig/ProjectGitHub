@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -29,12 +30,9 @@ import java.util.HashMap;
 public class UsersActivity extends AppCompatActivity {
 
     private String TAG = MainActivity.class.getSimpleName();
-    private ProgressDialog pDialog;
     ArrayList<HashMap<String, String>> apiList;
     HashMap<String, String> item = new HashMap<>();
     private String url = "https://api.github.com/users/";
-    private String urlRepo;
-    private ListView lv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,14 +47,9 @@ public class UsersActivity extends AppCompatActivity {
         String login = intent.getStringExtra("login");
         //For ResultOneUser
         url = url + login;
-        urlRepo = url + "/repos";
         apiList = new ArrayList<>();
 
-        //For ResultRepositoriesForOneUser
-        lv = (ListView) findViewById(R.id.list);
-
         new resultOneUser().execute();
-        new resultRepositoriesForOneUser().execute();
     }
 
     @Override
@@ -144,106 +137,10 @@ public class UsersActivity extends AppCompatActivity {
         }
     }
 
-
-
-    // ------ RESULTATS REPO FOR THIS USER
-    private class resultRepositoriesForOneUser extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            // Showing progress dialog
-            pDialog = new ProgressDialog(UsersActivity.this);
-            pDialog.setMessage("Please wait...");
-            pDialog.setCancelable(false);
-            pDialog.show();
-        }
-
-        @Override
-        protected Void doInBackground(Void... arg0) {
-            ClientHTTP sh = new ClientHTTP();
-
-            // Making a request to url and getting response
-            String jsonStr = sh.callAPI(urlRepo);
-
-            if (jsonStr != null) {
-                try {
-                    //jsonStr to JsonArray
-                    JSONArray items = new JSONArray(jsonStr);
-
-                    //Looping through all items
-                    for (int i = 0; i < items.length(); i++) {
-                        JSONObject c = items.getJSONObject(i);
-
-                        String full_name = c.getString("full_name");
-                        String description = c.getString("description");
-                        String language = c.getString("language");
-                        String url = c.getString("url");
-
-                        HashMap<String, String> item = new HashMap<>();
-
-                        item.put("full_name", full_name);
-                        item.put("description", description);
-                        item.put("language", language);
-                        item.put("url", url);
-
-                        apiList.add(item);
-                    }
-                } catch (final JSONException e) {
-                    Log.e(TAG, "Json parsing error: " + e.getMessage());
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(),
-                                    "Json parsing error: " + e.getMessage(),
-                                    Toast.LENGTH_LONG)
-                                    .show();
-                        }
-                    });
-
-                }
-            } else {
-                Log.e(TAG, "Couldn't get json from server.");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),
-                                "Couldn't get json from server. Check LogCat for possible errors!",
-                                Toast.LENGTH_LONG)
-                                .show();
-                    }
-                });
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
-            // Dismiss the progress dialog
-            if (pDialog.isShowing())
-                pDialog.dismiss();
-
-            ListAdapter adapter = new SimpleAdapter(
-                    UsersActivity.this, apiList,
-                    R.layout.list_item, new String[]{"full_name", "description", "language", "url"}, new int[]{R.id.textViewFullName, R.id.textViewDescription, R.id.textViewLanguage, R.id.textViewUrl});
-            lv.setAdapter(adapter);
-
-            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                String url = ((TextView) view.findViewById(R.id.textViewUrl)).getText().toString();
-                String full_name = ((TextView) view.findViewById(R.id.textViewFullName)).getText().toString();
-
-                Toast toast = Toast.makeText(getApplicationContext(), full_name, Toast.LENGTH_SHORT);
-                toast.show();
-
-                Intent intent = new Intent(UsersActivity.this, RepositoriesActivity.class);
-                intent.putExtra("url", url);
-                startActivity(intent);
-                }
-            });
-        }
+    public void searchRepositoriesForOneUser (View view) {
+        Intent intent = new Intent(this, ResultSearchActivity.class);
+        intent.putExtra("url", url);
+        intent.putExtra("repos", "/repos");
+        startActivity(intent);
     }
 }

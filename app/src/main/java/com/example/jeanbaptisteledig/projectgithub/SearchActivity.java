@@ -25,7 +25,8 @@ public class SearchActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ResultSearchActivity.class);
         EditText editText = (EditText) findViewById(R.id.editTextRepo);
         String search = editText.getText().toString();
-        intent.putExtra("SearchRepo", search);
+        intent.putExtra("searchRepo", search);
+        intent.putExtra("urlRepo", "https://api.github.com/search/repositories?q=");
         startActivity(intent);
     }
 
@@ -33,7 +34,8 @@ public class SearchActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ResultSearchActivity.class);
         EditText editTextUser = (EditText) findViewById(R.id.editTextUser);
         String searchUser = editTextUser.getText().toString();
-        intent.putExtra("SearchUser", searchUser);
+        intent.putExtra("searchUser", searchUser);
+        intent.putExtra("urlUser", "https://api.github.com/search/users?q=");
         startActivity(intent);
     }
 

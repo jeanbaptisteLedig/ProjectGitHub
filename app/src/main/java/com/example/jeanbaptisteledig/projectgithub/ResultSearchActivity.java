@@ -32,9 +32,11 @@ public class ResultSearchActivity extends AppCompatActivity {
     ArrayList<HashMap<String, String>> apiList;
 
     // ------ FOR REPO --------
-    private String url = "https://api.github.com/search/repositories?q=";
+    private String urlRepo = null;
     // ------ FOR USER --------
-    private String urlUser = "https://api.github.com/search/users?q=";
+    private String urlUser = null;
+    // ------ FOR REPO FOR ONE USER ------
+    private String urlRepoForOneUser = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,18 +50,28 @@ public class ResultSearchActivity extends AppCompatActivity {
         apiList = new ArrayList<>();
 
         // ------ FOR REPO --------
-        String message = intent.getStringExtra("SearchRepo");
-        url = url + message;
+        String messageRepo = intent.getStringExtra("searchRepo");
+        urlRepo = intent.getStringExtra("urlRepo");
+        urlRepo = urlRepo + messageRepo;
         // ------ FOR REPO --------
         // ------ FOR USER --------
-        String messageUser = intent.getStringExtra("SearchUser");
+        String messageUser = intent.getStringExtra("searchUser");
+        urlUser = intent.getStringExtra("urlUser");
         urlUser = urlUser + messageUser;
         // ------ FOR USER --------
+        // ------ FOR REPO FOR ONE USER ------
+        String repos = intent.getStringExtra("repos");
+        urlRepoForOneUser = intent.getStringExtra("url");
+        urlRepoForOneUser = urlRepoForOneUser + repos;
+        // ------ FOR REPO FOR ONE USER ------
 
-        if(message == null) {
+        if(messageRepo == null && repos == null) {
             new resultUsers().execute(); }
-        else if (messageUser == null) {
+        else if (messageUser == null && repos == null) {
             new resultRepositories().execute(); }
+        else if (messageRepo == null && messageUser == null) {
+            new resultRepositoriesForOneUser().execute();
+        }
     }
 
     @Override
@@ -91,7 +103,7 @@ public class ResultSearchActivity extends AppCompatActivity {
             ClientHTTP sh = new ClientHTTP();
 
             // Making a request to url and getting response
-            String jsonStr = sh.callAPI(url);
+            String jsonStr = sh.callAPI(urlRepo);
 
             if (jsonStr != null) {
                 try {
@@ -109,8 +121,6 @@ public class ResultSearchActivity extends AppCompatActivity {
                         String description = c.getString("description");
                         String language = c.getString("language");
                         String url = c.getString("url");
-
-                        //JSONObject owner = c.getJSONObject("owner");
 
                         HashMap<String, String> item = new HashMap<>();
 
@@ -155,9 +165,7 @@ public class ResultSearchActivity extends AppCompatActivity {
             // Dismiss the progress dialog
             if (pDialog.isShowing())
                 pDialog.dismiss();
-            /**
-             * Updating parsed JSON data into ListView
-             * */
+
             ListAdapter adapter = new SimpleAdapter(
                     ResultSearchActivity.this, apiList,
                     R.layout.list_item, new String[]{"full_name", "description", "language", "url"}, new int[]{R.id.textViewFullName, R.id.textViewDescription, R.id.textViewLanguage, R.id.textViewUrl});
@@ -263,9 +271,7 @@ public class ResultSearchActivity extends AppCompatActivity {
             // Dismiss the progress dialog
             if (pDialog.isShowing())
                 pDialog.dismiss();
-            /**
-             * Updating parsed JSON data into ListView
-             * */
+
             ListAdapter adapter = new SimpleAdapter(
                     ResultSearchActivity.this, apiList,
                     R.layout.list_item_users, new String[]{"login"}, new int[]{R.id.textViewLogin});
@@ -282,6 +288,107 @@ public class ResultSearchActivity extends AppCompatActivity {
 
                     Intent intent = new Intent(ResultSearchActivity.this, UsersActivity.class);
                     intent.putExtra("login", login);
+                    startActivity(intent);
+                }
+            });
+        }
+    }
+
+    // ------ RESULTATS REPO FOR THIS USER
+    private class resultRepositoriesForOneUser extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Showing progress dialog
+            pDialog = new ProgressDialog(ResultSearchActivity.this);
+            pDialog.setMessage("Please wait...");
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            ClientHTTP sh = new ClientHTTP();
+
+            // Making a request to url and getting response
+            String jsonStr = sh.callAPI(urlRepoForOneUser);
+
+            if (jsonStr != null) {
+                try {
+                    //jsonStr to JsonArray
+                    JSONArray items = new JSONArray(jsonStr);
+
+                    //Looping through all items
+                    for (int i = 0; i < items.length(); i++) {
+                        JSONObject c = items.getJSONObject(i);
+
+                        String full_name = c.getString("full_name");
+                        String description = c.getString("description");
+                        String language = c.getString("language");
+                        String url = c.getString("url");
+
+                        HashMap<String, String> item = new HashMap<>();
+
+                        item.put("full_name", full_name);
+                        item.put("description", description);
+                        item.put("language", language);
+                        item.put("url", url);
+
+                        apiList.add(item);
+                    }
+                } catch (final JSONException e) {
+                    Log.e(TAG, "Json parsing error: " + e.getMessage());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(),
+                                    "Json parsing error: " + e.getMessage(),
+                                    Toast.LENGTH_LONG)
+                                    .show();
+                        }
+                    });
+
+                }
+            } else {
+                Log.e(TAG, "Couldn't get json from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Couldn't get json from server. Check LogCat for possible errors!",
+                                Toast.LENGTH_LONG)
+                                .show();
+                    }
+                });
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            // Dismiss the progress dialog
+            if (pDialog.isShowing())
+                pDialog.dismiss();
+
+            ListAdapter adapter = new SimpleAdapter(
+                    ResultSearchActivity.this, apiList,
+                    R.layout.list_item, new String[]{"full_name", "description", "language", "url"}, new int[]{R.id.textViewFullName, R.id.textViewDescription, R.id.textViewLanguage, R.id.textViewUrl});
+            lv.setAdapter(adapter);
+
+            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    String url = ((TextView) view.findViewById(R.id.textViewUrl)).getText().toString();
+                    String full_name = ((TextView) view.findViewById(R.id.textViewFullName)).getText().toString();
+
+                    Toast toast = Toast.makeText(getApplicationContext(), full_name, Toast.LENGTH_SHORT);
+                    toast.show();
+
+                    Intent intent = new Intent(ResultSearchActivity.this, RepositoriesActivity.class);
+                    intent.putExtra("url", url);
                     startActivity(intent);
                 }
             });

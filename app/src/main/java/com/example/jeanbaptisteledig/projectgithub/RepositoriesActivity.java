@@ -41,7 +41,6 @@ public class RepositoriesActivity extends AppCompatActivity {
         url = intent.getStringExtra("url");
         apiList = new ArrayList<>();
 
-        Log.e(TAG, "onCreate: " + url );
         new resultOneRepositorie().execute();
     }
 
@@ -73,7 +72,6 @@ public class RepositoriesActivity extends AppCompatActivity {
 
             // Making a request to url and getting response
             String jsonStr = sh.callAPI(url);
-            Log.e(TAG, "doInBackground: " + jsonStr );
 
             if (jsonStr != null) {
                 try {
@@ -83,6 +81,11 @@ public class RepositoriesActivity extends AppCompatActivity {
                     String name = jsonObj.getString("name");
                     String description = jsonObj.getString("description");
                     String language = jsonObj.getString("language");
+                    String stargazers = jsonObj.getString("stargazers_count");
+                    String watchers = jsonObj.getString("subscribers_count");
+                    String forks = jsonObj.getString("forks");
+                    String issues = jsonObj.getString("open_issues_count");
+                    String access = jsonObj.getString("private");
 
                     JSONObject owner = jsonObj.getJSONObject("owner");
                     String login = owner.getString("login");
@@ -93,6 +96,11 @@ public class RepositoriesActivity extends AppCompatActivity {
                     item.put("language", language);
                     item.put("login", login);
                     item.put("avatar_url", avatar_url);
+                    item.put("stargazers", stargazers);
+                    item.put("watchers", watchers);
+                    item.put("forks", forks);
+                    item.put("issues", issues);
+                    item.put("access", access);
 
                     apiList.add(item);
 
@@ -135,6 +143,11 @@ public class RepositoriesActivity extends AppCompatActivity {
             TextView textViewDescription = (TextView) findViewById(R.id.textViewDescription);
             TextView textViewLanguage = (TextView) findViewById(R.id.textViewLanguage);
             TextView textViewLogin = (TextView) findViewById(R.id.textViewLogin);
+            TextView textViewStargazers = (TextView) findViewById(R.id.textViewStargazers);
+            TextView textViewWatchers = (TextView) findViewById(R.id.textViewWatchers);
+            TextView textViewForks = (TextView) findViewById(R.id.textViewForks);
+            TextView textViewIssues = (TextView) findViewById(R.id.textViewIssues);
+            TextView textViewAccess = (TextView) findViewById(R.id.textViewAccess);
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
 
             String name = item.get("name").toString();
@@ -142,12 +155,28 @@ public class RepositoriesActivity extends AppCompatActivity {
             String language = item.get("language").toString();
             String login = item.get("login").toString();
             String avatar_url = item.get("avatar_url").toString();
+            String stargazers = item.get("stargazers").toString() + " Stargazers";
+            String watchers = item.get("watchers").toString() + " Watchers";
+            String forks = item.get("forks").toString() + " Forks";
+            String issues = item.get("issues").toString() + " Issues";
+            String access = item.get("access").toString();
 
             textViewName.setText(name);
             textViewDescription.setText(description);
             textViewLanguage.setText(language);
             textViewLogin.setText(login);
+            textViewStargazers.setText(stargazers);
+            textViewWatchers.setText(watchers);
+            textViewForks.setText(forks);
+            textViewIssues.setText(issues);
             Picasso.with(RepositoriesActivity.this).load(avatar_url).into(imageView);
+
+            if (access == "true") {
+                textViewAccess.setText("Private");
+            }
+            else if (access == "false") {
+                textViewAccess.setText("Public");
+            }
         }
     }
 }
