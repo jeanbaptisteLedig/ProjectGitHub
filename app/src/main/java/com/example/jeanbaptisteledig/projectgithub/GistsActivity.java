@@ -3,51 +3,50 @@ package com.example.jeanbaptisteledig.projectgithub;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 
-public class RepositoriesActivity extends AppCompatActivity {
+public class GistsActivity extends AppCompatActivity {
 
-    private String TAG = RepositoriesActivity.class.getSimpleName();
+    private String TAG = GistsActivity.class.getSimpleName();
     private ProgressDialog pDialog;
     ArrayList<HashMap<String, String>> apiList;
     HashMap<String, String> item = new HashMap<>();
     private String url;
 
-    private String username;
-    private String password;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_repositories);
+        setContentView(R.layout.activity_gists);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         //From ResultSearchActivity
         Intent intent = getIntent();
-        username = intent.getStringExtra("username");
-        password = intent.getStringExtra("password");
         url = intent.getStringExtra("url");
         apiList = new ArrayList<>();
 
-        new resultOneRepositorie().execute();
+        new resultOneGist().execute();
     }
 
     @Override
@@ -60,50 +59,13 @@ public class RepositoriesActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void addWatchers(View v) {
-
-        JSONObject object = new JSONObject();
-        try {
-            object.put("subscribed", true);
-            object.put("ignored", false);
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        System.out.println(object);
-
-        String urlSub = url + "/subscription";
-        new PostAPI().execute(username, password, urlSub, object.toString(), "PUT");
-
-        finish();
-        startActivity(getIntent());
-    }
-
-    public void addStargazers(View v) {
-
-        JSONObject object = new JSONObject();
-        try {
-            object.put("subscribed", true);
-            object.put("ignored", false);
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        System.out.println(object);
-
-        //new PostAPI().execute(username, password, "https://api.github.com/user/starred/jeanbaptisteLedig/ProjetDockerHub", object.toString(), "PUT");
-
-        finish();
-        startActivity(getIntent());
-    }
-
-    private class resultOneRepositorie extends AsyncTask<Void, Void, Void> {
+    private class resultOneGist extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             // Showing progress dialog
-            pDialog = new ProgressDialog(RepositoriesActivity.this);
+            pDialog = new ProgressDialog(GistsActivity.this);
             pDialog.setMessage("Please wait...");
             pDialog.setCancelable(false);
             pDialog.show();
@@ -121,29 +83,41 @@ public class RepositoriesActivity extends AppCompatActivity {
                     //JSONstr to JSONobj
                     JSONObject jsonObj = new JSONObject(jsonStr);
 
-                    String name = jsonObj.getString("name");
                     String description = jsonObj.getString("description");
-                    String language = jsonObj.getString("language");
-                    String stargazers = jsonObj.getString("stargazers_count");
-                    String watchers = jsonObj.getString("subscribers_count");
-                    String forks = jsonObj.getString("forks");
-                    String issues = jsonObj.getString("open_issues_count");
-                    String access = jsonObj.getString("private");
+                    String comments = jsonObj.getString("comments");
+                    String access = jsonObj.getString("public");
+                    String created_at = jsonObj.getString("created_at");
+
+                    JSONObject filesObj = jsonObj.getJSONObject("files");
+                    JSONArray filesArray = filesObj.names();
+                    String files = filesArray.getString(0);
+
+                    JSONObject thisFileObj = filesObj.getJSONObject(files);
+                    String filename = thisFileObj.getString("filename");
+
+                    JSONArray history = jsonObj.getJSONArray("history");
+                    JSONArray forks = jsonObj.getJSONArray("forks");
 
                     JSONObject owner = jsonObj.getJSONObject("owner");
                     String login = owner.getString("login");
                     String avatar_url = owner.getString("avatar_url");
 
-                    item.put("name", name);
+                    int revisionsNumber = history.length();
+                    String nombreRevisions = String.valueOf(revisionsNumber);
+                    int forksNumber = forks.length();
+                    String nombreForks = String.valueOf(forksNumber);
+                    int filesNumber = files.length();
+                    String nombreFiles = String.valueOf(filesNumber);
+
                     item.put("description", description);
-                    item.put("language", language);
+                    item.put("comments", comments);
                     item.put("login", login);
                     item.put("avatar_url", avatar_url);
-                    item.put("stargazers", stargazers);
-                    item.put("watchers", watchers);
-                    item.put("forks", forks);
-                    item.put("issues", issues);
                     item.put("access", access);
+                    item.put("filename", filename);
+                    item.put("nombreRevisions", nombreRevisions);
+                    item.put("nombreForks", nombreForks);
+                    item.put("nombreFiles", nombreFiles);
 
                     apiList.add(item);
 
@@ -184,33 +158,33 @@ public class RepositoriesActivity extends AppCompatActivity {
 
             TextView textViewName = (TextView) findViewById(R.id.textViewName);
             TextView textViewDescription = (TextView) findViewById(R.id.textViewDescription);
-            TextView textViewLanguage = (TextView) findViewById(R.id.textViewLanguage);
+            TextView textViewComments = (TextView) findViewById(R.id.textViewComments);
             TextView textViewLogin = (TextView) findViewById(R.id.textViewLogin);
-            TextView textViewStargazers = (TextView) findViewById(R.id.textViewStargazers);
-            TextView textViewWatchers = (TextView) findViewById(R.id.textViewWatchers);
-            TextView textViewForks = (TextView) findViewById(R.id.textViewForks);
-            TextView textViewIssues = (TextView) findViewById(R.id.textViewIssues);
             TextView textViewAccess = (TextView) findViewById(R.id.textViewAccess);
+            TextView textViewRevisions = (TextView) findViewById(R.id.textViewRevisions);
+            TextView textViewForks = (TextView) findViewById(R.id.textViewForks);
+            TextView textViewFiles = (TextView) findViewById(R.id.textViewFiles);
+            TextView textViewDate = (TextView) findViewById(R.id.textViewDate);
+
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
 
-            String name = item.get("name").toString();
+            String filename = item.get("filename").toString();
             String description = item.get("description").toString();
-            String language = item.get("language").toString();
+            String comments = item.get("comments").toString() + " Comments";
             String login = item.get("login").toString();
             String avatar_url = item.get("avatar_url").toString();
-            String stargazers = item.get("stargazers").toString() + " Stargazers";
-            String watchers = item.get("watchers").toString() + " Watchers";
-            String forks = item.get("forks").toString() + " Forks";
-            String issues = item.get("issues").toString() + " Issues";
             String access = item.get("access").toString();
+            String nombreRevisions = item.get("nombreRevisions").toString();
+            String nombreForks = item.get("nombreForks").toString();
+            String nombreFiles = item.get("nombreFiles").toString();
 
-            textViewName.setText(name);
+            textViewName.setText(filename);
             textViewLogin.setText(login);
-            textViewStargazers.setText(stargazers);
-            textViewWatchers.setText(watchers);
-            textViewForks.setText(forks);
-            textViewIssues.setText(issues);
-            Picasso.with(RepositoriesActivity.this).load(avatar_url).into(imageView);
+            textViewComments.setText(comments);
+            textViewRevisions.setText(nombreRevisions + " Revisions");
+            textViewForks.setText(nombreForks + " Forks");
+            textViewFiles.setText(nombreFiles + " Files");
+            Picasso.with(GistsActivity.this).load(avatar_url).into(imageView);
 
             if (description == "null") {
                 textViewDescription.setText("N/A");
@@ -219,20 +193,13 @@ public class RepositoriesActivity extends AppCompatActivity {
                 textViewDescription.setText(description);
             }
 
-            if (language == "null") {
-                textViewLanguage.setText("N/A");
-            }
-            else {
-                textViewLanguage.setText(language);
-            }
-
             if (access == "true") {
-                textViewAccess.setText("Private");
-            }
-            else if (access == "false") {
                 textViewAccess.setText("Public");
             }
-            setTitle(name);
+            else {
+                textViewAccess.setText("Private");
+            }
+            setTitle(filename);
         }
     }
 }

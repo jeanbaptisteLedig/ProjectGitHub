@@ -1,18 +1,21 @@
 package com.example.jeanbaptisteledig.projectgithub;
 
 import android.app.ProgressDialog;
+import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.ListView;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.v4.media.MediaBrowserServiceCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.EditText;
 import android.widget.ListAdapter;
-import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,22 +29,36 @@ import java.util.HashMap;
 
 public class ResultSearchActivity extends AppCompatActivity {
 
-    private String TAG = MainActivity.class.getSimpleName();
+    private String TAG = ResultSearchActivity.class.getSimpleName();
     private ProgressDialog pDialog;
     private ListView lv;
     ArrayList<HashMap<String, String>> apiList;
 
     // ------ FOR REPO --------
     private String urlRepo = null;
+    private String messageRepo = null;
     // ------ FOR USER --------
     private String urlUser = null;
+    private String messageUser = null;
     // ------ FOR REPO FOR ONE USER ------
     private String urlRepoForOneUser = null;
+    private String repos = null;
+    // ------ FOR ORGS FOR ONE USER ------
+    private String urlOrgsForOneUser = null;
+    private String orgs = null;
+    // ------ FOR GISTS FOR ONE USER ------
+    private String urlGistsForOneUser = null;
+    private String gists = null;
+    private String username;
+    private String password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result_search);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -50,27 +67,57 @@ public class ResultSearchActivity extends AppCompatActivity {
         apiList = new ArrayList<>();
 
         // ------ FOR REPO --------
-        String messageRepo = intent.getStringExtra("searchRepo");
+        messageRepo = intent.getStringExtra("searchRepo");
         urlRepo = intent.getStringExtra("urlRepo");
         urlRepo = urlRepo + messageRepo;
         // ------ FOR REPO --------
         // ------ FOR USER --------
-        String messageUser = intent.getStringExtra("searchUser");
+        messageUser = intent.getStringExtra("searchUser");
         urlUser = intent.getStringExtra("urlUser");
         urlUser = urlUser + messageUser;
         // ------ FOR USER --------
         // ------ FOR REPO FOR ONE USER ------
-        String repos = intent.getStringExtra("repos");
-        urlRepoForOneUser = intent.getStringExtra("url");
+        repos = intent.getStringExtra("repos");
+        urlRepoForOneUser = intent.getStringExtra("urlRepos");
         urlRepoForOneUser = urlRepoForOneUser + repos;
         // ------ FOR REPO FOR ONE USER ------
+        // ------ FOR ORGS FOR ONE USER ------
+        orgs = intent.getStringExtra("orgs");
+        urlOrgsForOneUser = intent.getStringExtra("urlOrgs");
+        urlOrgsForOneUser = urlOrgsForOneUser + orgs;
+        // ------ FOR ORGS FOR ONE USER ------
+        // ------ FOR GISTS FOR ONE USER ------
+        gists = intent.getStringExtra("gists");
+        username = intent.getStringExtra("username");
+        password = intent.getStringExtra("password");
+        urlGistsForOneUser = intent.getStringExtra("urlGists");
+        urlGistsForOneUser = urlGistsForOneUser + gists;
+        Log.e(TAG, "onCreate: " + urlGistsForOneUser );
+        Log.e("TAG", "addGist: " + username + password );
+        // ------ FOR GISTS FOR ONE USER ------
 
-        if(messageRepo == null && repos == null) {
-            new resultUsers().execute(); }
-        else if (messageUser == null && repos == null) {
+        if(messageUser == null && repos == null && orgs == null && gists == null) {
             new resultRepositories().execute(); }
-        else if (messageRepo == null && messageUser == null) {
-            new resultRepositoriesForOneUser().execute();
+        else if (messageRepo == null && repos == null && orgs == null && gists == null) {
+            new resultUsers().execute(); }
+        else if (messageRepo == null && messageUser == null && orgs == null && gists == null) {
+            new resultRepositoriesForOneUser().execute(); }
+        else if (messageRepo == null && messageUser == null && repos == null && gists == null) {
+            new resultOrgsForOneUser().execute(); }
+        else if (messageRepo == null && messageUser == null && repos == null && orgs == null) {
+            new resultGistsForOneUser().execute();
+
+            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+            fab.setVisibility(View.VISIBLE);
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(ResultSearchActivity.this, AddGistActivity.class);
+                    intent.putExtra("username", username);
+                    intent.putExtra("password", password);
+                    startActivity(intent);
+                }
+            });
         }
     }
 
@@ -83,7 +130,6 @@ public class ResultSearchActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     // -------- RESULTS REPO ----------
     private class resultRepositories extends AsyncTask<Void, Void, Void> {
@@ -184,6 +230,8 @@ public class ResultSearchActivity extends AppCompatActivity {
 
                     Intent intent = new Intent(ResultSearchActivity.this, RepositoriesActivity.class);
                     intent.putExtra("url", url);
+                    intent.putExtra("username", username);
+                    intent.putExtra("password", password);
                     startActivity(intent);
                 }
             });
@@ -274,14 +322,14 @@ public class ResultSearchActivity extends AppCompatActivity {
 
             ListAdapter adapter = new SimpleAdapter(
                     ResultSearchActivity.this, apiList,
-                    R.layout.list_item_users, new String[]{"login"}, new int[]{R.id.textViewLogin});
+                    R.layout.list_item_users, new String[]{"login"}, new int[]{R.id.textViewName});
             lv.setAdapter(adapter);
 
             lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                    String login = ((TextView) view.findViewById(R.id.textViewLogin)).getText().toString();
+                    String login = ((TextView) view.findViewById(R.id.textViewName)).getText().toString();
 
                     Toast toast = Toast.makeText(getApplicationContext(), "Go to : " + login, Toast.LENGTH_SHORT);
                     toast.show();
@@ -388,6 +436,191 @@ public class ResultSearchActivity extends AppCompatActivity {
                     toast.show();
 
                     Intent intent = new Intent(ResultSearchActivity.this, RepositoriesActivity.class);
+                    intent.putExtra("url", url);
+                    startActivity(intent);
+                }
+            });
+        }
+    }
+
+
+    // ------ RESULTATS ORGS FOR THIS USER
+    private class resultOrgsForOneUser extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Showing progress dialog
+            pDialog = new ProgressDialog(ResultSearchActivity.this);
+            pDialog.setMessage("Please wait...");
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            ClientHTTP sh = new ClientHTTP();
+
+            // Making a request to url and getting response
+            String jsonStr = sh.callAPI(urlOrgsForOneUser);
+
+            if (jsonStr != null) {
+                try {
+                    //jsonStr to JsonArray
+                    JSONArray items = new JSONArray(jsonStr);
+
+                    //Looping through all items
+                    for (int i = 0; i < items.length(); i++) {
+                        JSONObject c = items.getJSONObject(i);
+
+                        String login = c.getString("login");
+
+                        HashMap<String, String> item = new HashMap<>();
+
+                        item.put("login", login);
+
+                        apiList.add(item);
+                    }
+                } catch (final JSONException e) {
+                    Log.e(TAG, "Json parsing error: " + e.getMessage());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(),
+                                    "Json parsing error: " + e.getMessage(),
+                                    Toast.LENGTH_LONG)
+                                    .show();
+                        }
+                    });
+
+                }
+            } else {
+                Log.e(TAG, "Couldn't get json from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Couldn't get json from server. Check LogCat for possible errors!",
+                                Toast.LENGTH_LONG)
+                                .show();
+                    }
+                });
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            // Dismiss the progress dialog
+            if (pDialog.isShowing())
+                pDialog.dismiss();
+
+            ListAdapter adapter = new SimpleAdapter(
+                    ResultSearchActivity.this, apiList,
+                    R.layout.list_item_orgs, new String[]{"login"}, new int[]{R.id.textViewLoginOrgs});
+            lv.setAdapter(adapter);
+        }
+    }
+
+
+    // ------ RESULTATS GISTS FOR THIS USER
+    private class resultGistsForOneUser extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Showing progress dialog
+            pDialog = new ProgressDialog(ResultSearchActivity.this);
+            pDialog.setMessage("Please wait...");
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            ClientHTTP sh = new ClientHTTP();
+
+            // Making a request to url and getting response
+            String jsonStr = sh.callAPI(urlGistsForOneUser);
+
+            if (jsonStr != null) {
+                try {
+                    //jsonStr to JsonArray
+                    JSONArray items = new JSONArray(jsonStr);
+
+                    //Looping through all items
+                    for (int i = 0; i < items.length(); i++) {
+                        JSONObject c = items.getJSONObject(i);
+
+                        String description = c.getString("description");
+                        String url = c.getString("url");
+
+                        JSONObject filesObj = c.getJSONObject("files");
+                        JSONArray filesArray = filesObj.names();
+                        String files = filesArray.getString(0);
+
+                        JSONObject thisFileObj = filesObj.getJSONObject(files);
+                        String filename = thisFileObj.getString("filename");
+
+                        HashMap<String, String> item = new HashMap<>();
+
+                        item.put("url", url);
+                        item.put("filename", filename);
+                        item.put("description", description);
+
+                        apiList.add(item);
+                    }
+                } catch (final JSONException e) {
+                    Log.e(TAG, "Json parsing error: " + e.getMessage());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(),
+                                    "Json parsing error: " + e.getMessage(),
+                                    Toast.LENGTH_LONG)
+                                    .show();
+                        }
+                    });
+
+                }
+            } else {
+                Log.e(TAG, "Couldn't get json from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Couldn't get json from server. Check LogCat for possible errors!",
+                                Toast.LENGTH_LONG)
+                                .show();
+                    }
+                });
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            // Dismiss the progress dialog
+            if (pDialog.isShowing())
+                pDialog.dismiss();
+
+            ListAdapter adapter = new SimpleAdapter(
+                    ResultSearchActivity.this, apiList,
+                    R.layout.list_item_orgs, new String[]{"filename", "description", "url"}, new int[]{R.id.textViewLoginOrgs, R.id.textViewDescription, R.id.textViewURL});
+            lv.setAdapter(adapter);
+
+            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    String url = ((TextView) view.findViewById(R.id.textViewURL)).getText().toString();
+
+                    Toast toast = Toast.makeText(getApplicationContext(), "Test", Toast.LENGTH_SHORT);
+                    toast.show();
+
+                    Intent intent = new Intent(ResultSearchActivity.this, GistsActivity.class);
                     intent.putExtra("url", url);
                     startActivity(intent);
                 }

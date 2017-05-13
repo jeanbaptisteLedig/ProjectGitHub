@@ -4,25 +4,40 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_profil"
-            android:icon="@drawable/ic_menu_camera"
-            android:title="My Profil" />
+            android:icon="@drawable/icons8_user"
+            android:title="Profil" />
+        <item
+            android:id="@+id/nav_news"
+            android:icon="@drawable/icons8_news"
+            android:title="News" />
         <item
             android:id="@+id/nav_search"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@drawable/icons8_search"
             android:title="Search" />
     </group>
 
-    <!--<item android:title="Communicate">
+    <item android:title="Repositories">
         <menu>
             <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/ic_menu_share"
-                android:title="Share" />
+                android:id="@+id/nav_own_repo"
+                android:icon="@drawable/icons8_file"
+                android:title="Mes repos" />
             <item
-                android:id="@+id/nav_send"
-                android:icon="@drawable/ic_menu_send"
-                android:title="Send" />
+                android:id="@+id/nav_star_repo"
+                android:icon="@drawable/icons8_star"
+                android:title="Starred repositories" />
         </menu>
-    </item>-->
-
+    </item>
+    <item android:title="Gists">
+        <menu>
+            <item
+                android:id="@+id/nav_own_gists"
+                android:icon="@drawable/icons8_google_code"
+                android:title="Mes Gists" />
+            <item
+                android:id="@+id/nav_star_gist"
+                android:icon="@drawable/icons8_star"
+                android:title="Starred gists" />
+        </menu>
+    </item>
 </menu>

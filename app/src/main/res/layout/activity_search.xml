@@ -12,37 +12,36 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Search a Repositories"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="26dp"
         android:layout_marginRight="8dp"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginLeft="8dp"
-        app:layout_constraintLeft_toLeftOf="parent" />
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginTop="38dp"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
     <EditText
         android:id="@+id/editTextRepo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="15dp"
         android:hint="Votre recherche..."
         android:inputType="textPersonName"
         app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewRepo"
         app:layout_constraintRight_toLeftOf="@+id/buttonRepo"
-        app:layout_constraintTop_toBottomOf="@+id/textViewRepo" />
+        android:layout_marginRight="8dp"
+        app:layout_constraintHorizontal_bias="0.0" />
 
     <Button
         android:id="@+id/buttonRepo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:onClick="sendRequestRepositories"
         android:text="Rechercher"
-        app:layout_constraintLeft_toRightOf="@+id/editTextRepo"
         app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="15dp"
         app:layout_constraintTop_toBottomOf="@+id/textViewRepo" />
 
     <TextView
@@ -50,13 +49,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Search a User"
-        android:layout_marginTop="104dp"
-        app:layout_constraintTop_toBottomOf="@+id/editTextUser"
         android:layout_marginRight="8dp"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginLeft="8dp"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintHorizontal_bias="0.501" />
+        app:layout_constraintHorizontal_bias="0.501"
+        android:layout_marginTop="38dp"
+        app:layout_constraintTop_toBottomOf="@+id/buttonRepo" />
 
     <EditText
         android:id="@+id/editTextUser"
@@ -64,7 +63,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="0dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:hint="Votre recherche..."
         android:inputType="textPersonName"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -77,11 +76,25 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="15dp"
         android:onClick="sendRequestUsers"
         android:text="Rechercher"
         app:layout_constraintLeft_toRightOf="@+id/editTextUser"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textViewUser" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Something to find ? "
+        android:textAlignment="center"
+        android:textSize="24sp"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="8dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginRight="8dp"
+        app:layout_constraintRight_toRightOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
