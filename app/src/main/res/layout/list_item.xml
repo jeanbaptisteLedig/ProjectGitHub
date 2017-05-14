@@ -35,4 +35,11 @@
         android:paddingBottom="2dip"
         android:visibility="invisible" />
 
+    <TextView
+        android:id="@+id/textViewTotalCount"
+        android:layout_width="0px"
+        android:layout_height="0px"
+        android:paddingBottom="2dip"
+        android:visibility="invisible" />
+
 </LinearLayout>

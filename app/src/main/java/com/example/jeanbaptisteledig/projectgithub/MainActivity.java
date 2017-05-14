@@ -25,6 +25,7 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import static com.example.jeanbaptisteledig.projectgithub.R.id.login;
+import static com.example.jeanbaptisteledig.projectgithub.R.id.navigation_header_container;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -43,11 +45,12 @@ public class MainActivity extends AppCompatActivity
     private String TAG = MainActivity.class.getSimpleName();
     private ProgressDialog pDialog;
     ArrayList<HashMap<String, String>> apiList;
-    private String url;
-    private String urlRepo;
+    private String urlEventsCurrentUSer;
+    private String urlCurrentUser;
     private ListView lv;
     private String username;
-    private String password;
+
+    User currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,15 +59,6 @@ public class MainActivity extends AppCompatActivity
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -76,19 +70,28 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         Intent intent = getIntent();
-        username = intent.getStringExtra("username");
-        password = intent.getStringExtra("password");
+        Bundle extras = intent.getExtras();
 
-        url = "https://api.github.com/users/" + username + "/received_events/public";
-        urlRepo = "https://api.github.com/users/"+ username;
+        if (extras != null) {
+            Gson gson = new Gson();
+            currentUser = gson.fromJson(extras.getString("currentUser"),User.class);
+            username = currentUser.getUsername();
+        } else {
+            Toast.makeText(getApplicationContext(), "Please retry to connect", Toast.LENGTH_SHORT).show();
+            Intent myIntent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(myIntent);
+        }
+
+        urlEventsCurrentUSer = "https://api.github.com/users/" + username + "/received_events/public";
+        urlCurrentUser = "https://api.github.com/users/"+ username;
 
         lv = (ListView) findViewById(R.id.list);
         apiList = new ArrayList<>();
 
         if (username.length() != 0) {
-            new resultEvents().execute();
-            new setCurrentUser().execute();
+            new resultEventsCurrentUser().execute();
         } else {
+            Toast.makeText(getApplicationContext(), "Please retry to connect", Toast.LENGTH_SHORT).show();
             Intent myIntent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(myIntent);
         }
@@ -121,9 +124,14 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            Gson gson = new Gson();
+            intent.putExtra("currentUser", gson.toJson(currentUser));
+            startActivity(intent);
+        } else if (id == R.id.action_logout) {
+            currentUser = null;
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(intent);
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -135,40 +143,44 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_search) {
             Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+            Gson gson = new Gson();
+            intent.putExtra("currentUser", gson.toJson(currentUser));
             startActivity(intent);
         } else if (id == R.id.nav_profil) {
             Intent intent = new Intent(MainActivity.this, UsersActivity.class);
-            intent.putExtra("login", username);
+            Gson gson = new Gson();
+            intent.putExtra("currentUser", gson.toJson(currentUser));
+            intent.putExtra("login", currentUser.getUsername());
             startActivity(intent);
         } else if (id == R.id.nav_news) {
-
+            //TO DO
         } else if (id == R.id.nav_own_repo) {
             Intent intent = new Intent(MainActivity.this, ResultSearchActivity.class);
-            intent.putExtra("urlRepos", urlRepo);
-            intent.putExtra("repos", "/repos");
+            Gson gson = new Gson();
+            intent.putExtra("currentUser", gson.toJson(currentUser));
+            intent.putExtra("urlReposCurrentUser", urlCurrentUser + "/repos");
             startActivity(intent);
         } else if (id == R.id.nav_star_repo) {
             Intent intent = new Intent(MainActivity.this, ResultSearchActivity.class);
-            intent.putExtra("urlRepos", urlRepo);
-            intent.putExtra("repos", "/starred");
+            Gson gson = new Gson();
+            intent.putExtra("currentUser", gson.toJson(currentUser));
+            intent.putExtra("urlReposCurrentUser", urlCurrentUser + "/starred");
             startActivity(intent);
         } else if (id == R.id.nav_own_gists) {
             Intent intent = new Intent(MainActivity.this, ResultSearchActivity.class);
-            intent.putExtra("urlGists", urlRepo);
-            intent.putExtra("gists", "/gists");
-            intent.putExtra("username", username);
-            intent.putExtra("password", password);
+            Gson gson = new Gson();
+            intent.putExtra("currentUser", gson.toJson(currentUser));
+            intent.putExtra("urlGistsCurrentUser", urlCurrentUser + "/gists");
             startActivity(intent);
         } else if (id == R.id.nav_star_gist) {
-
+            //TO DO
         }
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    private class resultEvents extends AsyncTask<Void, Void, Void> {
+    private class resultEventsCurrentUser extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected void onPreExecute() {
@@ -185,7 +197,7 @@ public class MainActivity extends AppCompatActivity
             ClientHTTP sh = new ClientHTTP();
 
             // Making a request to url and getting response
-            String jsonStr = sh.callAPI(url);
+            String jsonStr = sh.callAPI(urlEventsCurrentUSer);
 
             if (jsonStr != null) {
                 try {
@@ -198,7 +210,6 @@ public class MainActivity extends AppCompatActivity
                         JSONObject c = items.getJSONObject(i);
 
                         String type = c.getString("type");
-
                         JSONObject actor = c.getJSONObject("actor");
                         String login = actor.getString("login");
 
@@ -220,7 +231,6 @@ public class MainActivity extends AppCompatActivity
                                     .show();
                         }
                     });
-
                 }
             } else {
                 Log.e(TAG, "Couldn't get json from server.");
@@ -248,79 +258,6 @@ public class MainActivity extends AppCompatActivity
                     MainActivity.this, apiList,
                     R.layout.list_item_events, new String[]{"type", "login"}, new int[]{R.id.textViewType, R.id.textViewLogin});
             lv.setAdapter(adapter);
-        }
-    }
-
-    private class setCurrentUser extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            ClientHTTP sh = new ClientHTTP();
-
-            // Making a request to url and getting response
-            String jsonStr = sh.callAPI("https://api.github.com/users/" + username);
-
-            if (jsonStr != null) {
-                try {
-                    //JSONstr to JSONobj
-                    JSONObject jsonObj = new JSONObject(jsonStr);
-
-                    //String login = jsonObj.getString("login");
-                    String avatar_url = jsonObj.getString("avatar_url");
-                    String bio = jsonObj.getString("bio");
-                    String name = jsonObj.getString("name");
-                    String followers = jsonObj.getString("followers");
-                    String following = jsonObj.getString("following");
-                    String nbRepos = jsonObj.getString("public_repos");
-                    String nbGists = jsonObj.getString("public_gists");
-
-                    User currentUser = new User();
-                    currentUser.setUsername(username);
-                    currentUser.setPassword(password);
-                    currentUser.setAvatar_url(avatar_url);
-                    currentUser.setBio(bio);
-                    currentUser.setName(name);
-                    currentUser.setFollowers(followers);
-                    currentUser.setFollowing(following);
-                    currentUser.setNbRepos(nbRepos);
-                    currentUser.setNbGists(nbGists);
-
-                } catch (final JSONException e) {
-                    Log.e(TAG, "Json parsing error: " + e.getMessage());
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(),
-                                    "Json parsing error: " + e.getMessage(),
-                                    Toast.LENGTH_LONG)
-                                    .show();
-                        }
-                    });
-
-                }
-            } else {
-                Log.e(TAG, "Couldn't get json from server.");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),
-                                "Couldn't get json from server. Check LogCat for possible errors!",
-                                Toast.LENGTH_LONG)
-                                .show();
-                    }
-                });
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
         }
     }
 }

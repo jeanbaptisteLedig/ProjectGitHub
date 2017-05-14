@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
@@ -26,6 +27,8 @@ public class UsersActivity extends AppCompatActivity {
     ArrayList<HashMap<String, String>> apiList;
     HashMap<String, String> item = new HashMap<>();
     private String url = "https://api.github.com/users/";
+    private String loginUser;
+    User currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,11 +38,21 @@ public class UsersActivity extends AppCompatActivity {
         //For Return button
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //From ResultSearchActivity
         Intent intent = getIntent();
-        String login = intent.getStringExtra("login");
+        Bundle extras = intent.getExtras();
+
+        if (extras != null) {
+            Gson gson = new Gson();
+            currentUser = gson.fromJson(extras.getString("currentUser"),User.class);
+            loginUser = intent.getStringExtra("login");
+        } else {
+            Toast.makeText(getApplicationContext(), "Please retry to connect", Toast.LENGTH_SHORT).show();
+            Intent myIntent = new Intent(UsersActivity.this, LoginActivity.class);
+            startActivity(myIntent);
+        }
+
         //For ResultOneUser
-        url = url + login;
+        url = url + loginUser;
         apiList = new ArrayList<>();
 
         new resultOneUser().execute();
@@ -159,22 +172,25 @@ public class UsersActivity extends AppCompatActivity {
 
     public void searchRepositoriesForOneUser (View view) {
         Intent intent = new Intent(this, ResultSearchActivity.class);
-        intent.putExtra("urlRepos", url);
-        intent.putExtra("repos", "/repos");
+        Gson gson = new Gson();
+        intent.putExtra("currentUser", gson.toJson(currentUser));
+        intent.putExtra("urlReposCurrentUser", url + "/repos");
         startActivity(intent);
     }
 
     public void searchTeamsForOneUser (View view) {
         Intent intent = new Intent(this, ResultSearchActivity.class);
-        intent.putExtra("urlOrgs", url);
-        intent.putExtra("orgs", "/orgs");
+        Gson gson = new Gson();
+        intent.putExtra("currentUser", gson.toJson(currentUser));
+        intent.putExtra("urlOrgs", url + "/orgs");
         startActivity(intent);
     }
 
     public void searchGistsForOneUser (View view) {
         Intent intent = new Intent(this, ResultSearchActivity.class);
-        intent.putExtra("urlGists", url);
-        intent.putExtra("gists", "/gists");
+        Gson gson = new Gson();
+        intent.putExtra("currentUser", gson.toJson(currentUser));
+        intent.putExtra("urlGistsCurrentUser", url + "/gists");
         startActivity(intent);
     }
 }

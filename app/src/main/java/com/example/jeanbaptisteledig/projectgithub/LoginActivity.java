@@ -36,6 +36,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -86,9 +88,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mLoginFormView;
 
     InputStream inputStream;
-
-    private String login;
-    public String[] userArray;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -220,7 +219,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
-        return true;
+        if(email.contains("@"))
+            return false;
+        else
+            return true;
     }
 
     private boolean isPasswordValid(String password) {
@@ -326,11 +328,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         private final String mEmail;
         private final String mPassword;
+        private String avatar_url;
+        private String bio;
+        private String name;
+        private String followers;
+        private String following;
+        private String nbRepos;
+        private String nbGists;
 
         UserLoginTask(String email, String password) {
             mEmail = email;
             mPassword = password;
-            login = email;
         }
 
         @Override
@@ -339,29 +347,26 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             try {
                 String url = "https://api.github.com/user";
-
-                //String uri = url+"/"+mEmail;
                 URL finale = new URL(url);
 
-                HttpURLConnection urlConnection = (HttpURLConnection) finale.openConnection();
+                HttpURLConnection conn = (HttpURLConnection) finale.openConnection();
 
                 String credentials = mEmail+":"+mPassword;
                 String basicAuth = "Basic "+Base64.encodeToString(credentials.getBytes(), Base64.DEFAULT);
 
-                urlConnection.setRequestProperty ("Authorization", basicAuth);
-                urlConnection.setRequestMethod("GET");
-                urlConnection.setDoInput(true);
-                urlConnection.connect();
+                conn.setRequestProperty ("Authorization", basicAuth);
+                conn.setRequestMethod("GET");
+                conn.setDoInput(true);
+                conn.connect();
 
                 //check for HTTP response
-                int httpStatus = urlConnection.getResponseCode();
-                Log.d(TAG, "doInBackground: " + httpStatus);
+                int httpStatus = conn.getResponseCode();
 
                 //if HTTP response is 200 i.e. HTTP_OK read inputstream else read errorstream
                 if (httpStatus != HttpURLConnection.HTTP_OK) {
-                    inputStream = urlConnection.getErrorStream();
+                    inputStream = conn.getErrorStream();
                     //print GitHub api hearder data
-                    Map<String, List<String>> map = urlConnection.getHeaderFields();
+                    Map<String, List<String>> map = conn.getHeaderFields();
                     System.out.println("Printing Response Header...\n");
                     for (Map.Entry<String, List<String>> entry : map.entrySet()) {
                         System.out.println(entry.getKey()
@@ -369,7 +374,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     }
                 }
                 else {
-                    inputStream = urlConnection.getInputStream();
+                    inputStream = conn.getInputStream();
                 }
 
                 //read inputstream
@@ -399,14 +404,72 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     }else{
                         JSONObject obj = (JSONObject) new JSONTokener(response).nextValue();
 
-                        Intent myIntent = new Intent(LoginActivity.this, MainActivity.class);
-                        myIntent.putExtra("username", mEmail);
-                        myIntent.putExtra("password", mPassword);
-                        startActivity(myIntent);
+                        ClientHTTP sh = new ClientHTTP();
+
+                        // Making a request to url and getting response
+                        String jsonStr = sh.callAPI("https://api.github.com/users/" + mEmail);
+
+                        if (jsonStr != null) {
+                            try {
+                                //JSONstr to JSONobj
+                                JSONObject jsonObj = new JSONObject(jsonStr);
+
+                                avatar_url = jsonObj.getString("avatar_url");
+                                bio = jsonObj.getString("bio");
+                                name = jsonObj.getString("name");
+                                followers = jsonObj.getString("followers");
+                                following = jsonObj.getString("following");
+                                nbRepos = jsonObj.getString("public_repos");
+                                nbGists = jsonObj.getString("public_gists");
+
+                                Log.d(TAG, "HTTPStatus : " + httpStatus);
+                                Log.d(TAG, "User connected : " + mEmail);
+
+                            } catch (final JSONException e) {
+                                Log.e(TAG, "Json parsing error: " + e.getMessage());
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getApplicationContext(),
+                                                "Json parsing error: " + e.getMessage(),
+                                                Toast.LENGTH_LONG)
+                                                .show();
+                                    }
+                                });
+                            }
+                        } else {
+                            Log.e(TAG, "Couldn't get json from server.");
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(),
+                                            "Couldn't get json from server. Check LogCat for possible errors!",
+                                            Toast.LENGTH_LONG)
+                                            .show();
+                                }
+                            });
+                        }
+
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        Gson gson = new Gson();
+
+                        User currentUser = new User();
+                        currentUser.setUsername(mEmail);
+                        currentUser.setPassword(mPassword);
+                        currentUser.setAvatar_url(avatar_url);
+                        currentUser.setBio(bio);
+                        currentUser.setName(name);
+                        currentUser.setFollowers(followers);
+                        currentUser.setFollowing(following);
+                        currentUser.setNbRepos(nbRepos);
+                        currentUser.setNbGists(nbGists);
+
+                        intent.putExtra("currentUser", gson.toJson(currentUser));
+                        startActivity(intent);
                     }
                 }
 
-                urlConnection.disconnect();
+                conn.disconnect();
             } catch (ProtocolException e) {
                 e.printStackTrace();
             } catch (MalformedURLException e) {
@@ -433,13 +496,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
             showProgress(false);
-
-            if (success) {
-
-            } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
         }
 
         @Override

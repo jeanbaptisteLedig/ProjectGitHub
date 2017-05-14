@@ -86,7 +86,6 @@ public class GistsActivity extends AppCompatActivity {
                     String description = jsonObj.getString("description");
                     String comments = jsonObj.getString("comments");
                     String access = jsonObj.getString("public");
-                    String created_at = jsonObj.getString("created_at");
 
                     JSONObject filesObj = jsonObj.getJSONObject("files");
                     JSONArray filesArray = filesObj.names();
@@ -106,7 +105,7 @@ public class GistsActivity extends AppCompatActivity {
                     String nombreRevisions = String.valueOf(revisionsNumber);
                     int forksNumber = forks.length();
                     String nombreForks = String.valueOf(forksNumber);
-                    int filesNumber = files.length();
+                    int filesNumber = filesArray.length();
                     String nombreFiles = String.valueOf(filesNumber);
 
                     item.put("description", description);
@@ -164,7 +163,6 @@ public class GistsActivity extends AppCompatActivity {
             TextView textViewRevisions = (TextView) findViewById(R.id.textViewRevisions);
             TextView textViewForks = (TextView) findViewById(R.id.textViewForks);
             TextView textViewFiles = (TextView) findViewById(R.id.textViewFiles);
-            TextView textViewDate = (TextView) findViewById(R.id.textViewDate);
 
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
 
@@ -187,18 +185,15 @@ public class GistsActivity extends AppCompatActivity {
             Picasso.with(GistsActivity.this).load(avatar_url).into(imageView);
 
             if (description == "null") {
-                textViewDescription.setText("N/A");
-            }
+                textViewDescription.setText("N/A"); }
             else {
-                textViewDescription.setText(description);
-            }
+                textViewDescription.setText(description); }
 
             if (access == "true") {
-                textViewAccess.setText("Public");
-            }
+                textViewAccess.setText("Public"); }
             else {
-                textViewAccess.setText("Private");
-            }
+                textViewAccess.setText("Private"); }
+
             setTitle(filename);
         }
     }

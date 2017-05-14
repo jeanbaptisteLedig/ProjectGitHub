@@ -11,11 +11,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 public class SearchActivity extends AppCompatActivity {
 
     public static final String EXTRA_MESSAGE = "com.example.projectgithub.MESSAGE";
     private String TAG = SearchActivity.class.getSimpleName();
+
+    User currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,24 +28,19 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-    }
 
-    public void sendRequestRepositories (View view) {
-        Intent intent = new Intent(this, ResultSearchActivity.class);
-        EditText editText = (EditText) findViewById(R.id.editTextRepo);
-        String search = editText.getText().toString();
-        intent.putExtra("searchRepo", search);
-        intent.putExtra("urlRepo", "https://api.github.com/search/repositories?q=");
-        startActivity(intent);
-    }
+        Intent intent = getIntent();
+        Bundle extras = intent.getExtras();
 
-    public void sendRequestUsers (View view) {
-        Intent intent = new Intent(this, ResultSearchActivity.class);
-        EditText editTextUser = (EditText) findViewById(R.id.editTextUser);
-        String searchUser = editTextUser.getText().toString();
-        intent.putExtra("searchUser", searchUser);
-        intent.putExtra("urlUser", "https://api.github.com/search/users?q=");
-        startActivity(intent);
+        if (extras != null) {
+            Gson gson = new Gson();
+            currentUser = gson.fromJson(extras.getString("currentUser"),User.class);
+        } else {
+            Toast.makeText(getApplicationContext(), "Please retry to connect", Toast.LENGTH_SHORT).show();
+            Intent myIntent = new Intent(SearchActivity.this, LoginActivity.class);
+            startActivity(myIntent);
+        }
+        setTitle("Search");
     }
 
     @Override
@@ -51,5 +51,27 @@ public class SearchActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void sendRequestRepositories (View view) {
+        Intent intent = new Intent(this, ResultSearchActivity.class);
+        EditText editText = (EditText) findViewById(R.id.editTextRepo);
+        String search = editText.getText().toString();
+        Gson gson = new Gson();
+        intent.putExtra("currentUser", gson.toJson(currentUser));
+        intent.putExtra("searchRepo", search);
+        intent.putExtra("urlRepo", "https://api.github.com/search/repositories?q=");
+        startActivity(intent);
+    }
+
+    public void sendRequestUsers (View view) {
+        Intent intent = new Intent(this, ResultSearchActivity.class);
+        EditText editTextUser = (EditText) findViewById(R.id.editTextUser);
+        String searchUser = editTextUser.getText().toString();
+        Gson gson = new Gson();
+        intent.putExtra("currentUser", gson.toJson(currentUser));
+        intent.putExtra("searchUser", searchUser);
+        intent.putExtra("urlUser", "https://api.github.com/search/users?q=");
+        startActivity(intent);
     }
 }

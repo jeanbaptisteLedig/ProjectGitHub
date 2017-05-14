@@ -20,6 +20,8 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,6 +36,8 @@ public class ResultSearchActivity extends AppCompatActivity {
     private ListView lv;
     ArrayList<HashMap<String, String>> apiList;
 
+    User currentUser;
+
     // ------ FOR REPO --------
     private String urlRepo = null;
     private String messageRepo = null;
@@ -42,15 +46,11 @@ public class ResultSearchActivity extends AppCompatActivity {
     private String messageUser = null;
     // ------ FOR REPO FOR ONE USER ------
     private String urlRepoForOneUser = null;
-    private String repos = null;
     // ------ FOR ORGS FOR ONE USER ------
     private String urlOrgsForOneUser = null;
     private String orgs = null;
     // ------ FOR GISTS FOR ONE USER ------
     private String urlGistsForOneUser = null;
-    private String gists = null;
-    private String username;
-    private String password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,48 +63,45 @@ public class ResultSearchActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         lv = (ListView) findViewById(R.id.list);
-        Intent intent = getIntent();
         apiList = new ArrayList<>();
 
-        // ------ FOR REPO --------
-        messageRepo = intent.getStringExtra("searchRepo");
-        urlRepo = intent.getStringExtra("urlRepo");
-        urlRepo = urlRepo + messageRepo;
-        // ------ FOR REPO --------
-        // ------ FOR USER --------
-        messageUser = intent.getStringExtra("searchUser");
-        urlUser = intent.getStringExtra("urlUser");
-        urlUser = urlUser + messageUser;
-        // ------ FOR USER --------
-        // ------ FOR REPO FOR ONE USER ------
-        repos = intent.getStringExtra("repos");
-        urlRepoForOneUser = intent.getStringExtra("urlRepos");
-        urlRepoForOneUser = urlRepoForOneUser + repos;
-        // ------ FOR REPO FOR ONE USER ------
-        // ------ FOR ORGS FOR ONE USER ------
-        orgs = intent.getStringExtra("orgs");
-        urlOrgsForOneUser = intent.getStringExtra("urlOrgs");
-        urlOrgsForOneUser = urlOrgsForOneUser + orgs;
-        // ------ FOR ORGS FOR ONE USER ------
-        // ------ FOR GISTS FOR ONE USER ------
-        gists = intent.getStringExtra("gists");
-        username = intent.getStringExtra("username");
-        password = intent.getStringExtra("password");
-        urlGistsForOneUser = intent.getStringExtra("urlGists");
-        urlGistsForOneUser = urlGistsForOneUser + gists;
-        Log.e(TAG, "onCreate: " + urlGistsForOneUser );
-        Log.e("TAG", "addGist: " + username + password );
-        // ------ FOR GISTS FOR ONE USER ------
+        Intent intent = getIntent();
+        Bundle extras = intent.getExtras();
 
-        if(messageUser == null && repos == null && orgs == null && gists == null) {
+        if (extras != null) {
+            Gson gson = new Gson();
+            currentUser = gson.fromJson(extras.getString("currentUser"),User.class);
+
+            // ------ FOR REPO --------
+            messageRepo = intent.getStringExtra("searchRepo");
+            urlRepo = intent.getStringExtra("urlRepo");
+            urlRepo = urlRepo + messageRepo;
+            // ------ FOR USER --------
+            messageUser = intent.getStringExtra("searchUser");
+            urlUser = intent.getStringExtra("urlUser");
+            urlUser = urlUser + messageUser;
+            // ------ FOR REPO FOR ONE USER ------
+            urlRepoForOneUser = intent.getStringExtra("urlReposCurrentUser");
+            // ------ FOR ORGS FOR ONE USER ------
+            urlOrgsForOneUser = intent.getStringExtra("urlOrgs");
+            // ------ FOR GISTS FOR ONE USER ------
+            urlGistsForOneUser = intent.getStringExtra("urlGistsCurrentUser");
+
+        } else {
+            Toast.makeText(getApplicationContext(), "Please retry to connect", Toast.LENGTH_SHORT).show();
+            Intent myIntent = new Intent(ResultSearchActivity.this, LoginActivity.class);
+            startActivity(myIntent);
+        }
+
+        if(messageUser == null && urlRepoForOneUser == null && urlOrgsForOneUser == null && urlGistsForOneUser == null) {
             new resultRepositories().execute(); }
-        else if (messageRepo == null && repos == null && orgs == null && gists == null) {
+        else if (messageRepo == null && urlRepoForOneUser == null && urlOrgsForOneUser == null && urlGistsForOneUser == null) {
             new resultUsers().execute(); }
-        else if (messageRepo == null && messageUser == null && orgs == null && gists == null) {
+        else if (messageRepo == null && messageUser == null && urlOrgsForOneUser == null && urlGistsForOneUser == null) {
             new resultRepositoriesForOneUser().execute(); }
-        else if (messageRepo == null && messageUser == null && repos == null && gists == null) {
+        else if (messageRepo == null && messageUser == null && urlRepoForOneUser == null && urlGistsForOneUser == null) {
             new resultOrgsForOneUser().execute(); }
-        else if (messageRepo == null && messageUser == null && repos == null && orgs == null) {
+        else if (messageRepo == null && messageUser == null && urlRepoForOneUser == null && urlOrgsForOneUser == null) {
             new resultGistsForOneUser().execute();
 
             FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -113,8 +110,8 @@ public class ResultSearchActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     Intent intent = new Intent(ResultSearchActivity.this, AddGistActivity.class);
-                    intent.putExtra("username", username);
-                    intent.putExtra("password", password);
+                    Gson gson = new Gson();
+                    intent.putExtra("currentUser", gson.toJson(currentUser));
                     startActivity(intent);
                 }
             });
@@ -218,20 +215,22 @@ public class ResultSearchActivity extends AppCompatActivity {
 
             lv.setAdapter(adapter);
 
+            setTitle("Repository result for : " + messageRepo);
+
             lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
                     String url = ((TextView) view.findViewById(R.id.textViewUrl)).getText().toString();
                     String full_name = ((TextView) view.findViewById(R.id.textViewFullName)).getText().toString();
 
-                    Toast toast = Toast.makeText(getApplicationContext(), "Go to : " + full_name, Toast.LENGTH_SHORT);
+                    Toast toast = Toast.makeText(getApplicationContext(), full_name, Toast.LENGTH_SHORT);
                     toast.show();
 
                     Intent intent = new Intent(ResultSearchActivity.this, RepositoriesActivity.class);
+                    Gson gson = new Gson();
+                    intent.putExtra("currentUser", gson.toJson(currentUser));
+                    intent.putExtra("urlPart2", full_name);
                     intent.putExtra("url", url);
-                    intent.putExtra("username", username);
-                    intent.putExtra("password", password);
                     startActivity(intent);
                 }
             });
@@ -325,16 +324,20 @@ public class ResultSearchActivity extends AppCompatActivity {
                     R.layout.list_item_users, new String[]{"login"}, new int[]{R.id.textViewName});
             lv.setAdapter(adapter);
 
+            setTitle("Repository result for : " + messageUser);
+
             lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
                     String login = ((TextView) view.findViewById(R.id.textViewName)).getText().toString();
 
-                    Toast toast = Toast.makeText(getApplicationContext(), "Go to : " + login, Toast.LENGTH_SHORT);
+                    Toast toast = Toast.makeText(getApplicationContext(), login, Toast.LENGTH_SHORT);
                     toast.show();
 
                     Intent intent = new Intent(ResultSearchActivity.this, UsersActivity.class);
+                    Gson gson = new Gson();
+                    intent.putExtra("currentUser", gson.toJson(currentUser));
                     intent.putExtra("login", login);
                     startActivity(intent);
                 }
@@ -425,6 +428,8 @@ public class ResultSearchActivity extends AppCompatActivity {
                     R.layout.list_item, new String[]{"full_name", "description", "language", "url"}, new int[]{R.id.textViewFullName, R.id.textViewDescription, R.id.textViewLanguage, R.id.textViewUrl});
             lv.setAdapter(adapter);
 
+            setTitle("Repository result");
+
             lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -436,6 +441,9 @@ public class ResultSearchActivity extends AppCompatActivity {
                     toast.show();
 
                     Intent intent = new Intent(ResultSearchActivity.this, RepositoriesActivity.class);
+                    Gson gson = new Gson();
+                    intent.putExtra("currentUser", gson.toJson(currentUser));
+                    intent.putExtra("urlPart2", full_name);
                     intent.putExtra("url", url);
                     startActivity(intent);
                 }
@@ -520,6 +528,8 @@ public class ResultSearchActivity extends AppCompatActivity {
                     ResultSearchActivity.this, apiList,
                     R.layout.list_item_orgs, new String[]{"login"}, new int[]{R.id.textViewLoginOrgs});
             lv.setAdapter(adapter);
+
+            setTitle("Organisations result");
         }
     }
 
@@ -611,16 +621,21 @@ public class ResultSearchActivity extends AppCompatActivity {
                     R.layout.list_item_orgs, new String[]{"filename", "description", "url"}, new int[]{R.id.textViewLoginOrgs, R.id.textViewDescription, R.id.textViewURL});
             lv.setAdapter(adapter);
 
+            setTitle("Gists result");
+
             lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
                     String url = ((TextView) view.findViewById(R.id.textViewURL)).getText().toString();
+                    String filename = ((TextView) view.findViewById(R.id.textViewLoginOrgs)).getText().toString();
 
-                    Toast toast = Toast.makeText(getApplicationContext(), "Test", Toast.LENGTH_SHORT);
+                    Toast toast = Toast.makeText(getApplicationContext(), filename, Toast.LENGTH_SHORT);
                     toast.show();
 
                     Intent intent = new Intent(ResultSearchActivity.this, GistsActivity.class);
+                    Gson gson = new Gson();
+                    intent.putExtra("currentUser", gson.toJson(currentUser));
                     intent.putExtra("url", url);
                     startActivity(intent);
                 }

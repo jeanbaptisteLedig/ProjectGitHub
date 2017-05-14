@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
@@ -29,9 +30,12 @@ public class RepositoriesActivity extends AppCompatActivity {
     ArrayList<HashMap<String, String>> apiList;
     HashMap<String, String> item = new HashMap<>();
     private String url;
+    private String urlPart2;
 
     private String username;
     private String password;
+
+    User currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,11 +44,21 @@ public class RepositoriesActivity extends AppCompatActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //From ResultSearchActivity
         Intent intent = getIntent();
-        username = intent.getStringExtra("username");
-        password = intent.getStringExtra("password");
-        url = intent.getStringExtra("url");
+        Bundle extras = intent.getExtras();
+
+        if (extras != null) {
+            Gson gson = new Gson();
+            currentUser = gson.fromJson(extras.getString("currentUser"),User.class);
+            url = intent.getStringExtra("url");
+            urlPart2 = intent.getStringExtra("urlPart2");
+            username = currentUser.getUsername();
+            password = currentUser.getPassword();
+        } else {
+            Toast.makeText(getApplicationContext(), "Please retry to connect", Toast.LENGTH_SHORT).show();
+            Intent myIntent = new Intent(RepositoriesActivity.this, LoginActivity.class);
+            startActivity(myIntent);
+        }
         apiList = new ArrayList<>();
 
         new resultOneRepositorie().execute();
@@ -70,8 +84,6 @@ public class RepositoriesActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        System.out.println(object);
-
         String urlSub = url + "/subscription";
         new PostAPI().execute(username, password, urlSub, object.toString(), "PUT");
 
@@ -89,9 +101,8 @@ public class RepositoriesActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        System.out.println(object);
-
-        //new PostAPI().execute(username, password, "https://api.github.com/user/starred/jeanbaptisteLedig/ProjetDockerHub", object.toString(), "PUT");
+        String urlStar = "https://api.github.com/user/starred/" + urlPart2;
+        new PostAPI().execute(username, password, urlStar, object.toString(), "PUT");
 
         finish();
         startActivity(getIntent());
@@ -158,7 +169,6 @@ public class RepositoriesActivity extends AppCompatActivity {
                                     .show();
                         }
                     });
-
                 }
             } else {
                 Log.e(TAG, "Couldn't get json from server.");

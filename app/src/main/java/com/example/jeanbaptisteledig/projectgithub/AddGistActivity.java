@@ -4,9 +4,13 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,16 +21,41 @@ public class AddGistActivity extends AppCompatActivity {
     private String password;
     private Boolean access = false;
 
+    private String urlCurrentUser;
+
+    User currentUser;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_gist);
 
-        Intent intent = getIntent();
-        username = intent.getStringExtra("username");
-        password = intent.getStringExtra("password");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        Log.e("TAG", "addGist: " + username + password );
+        Intent intent = getIntent();
+        Bundle extras = intent.getExtras();
+
+        if (extras != null) {
+            Gson gson = new Gson();
+            currentUser = gson.fromJson(extras.getString("currentUser"),User.class);
+            username = currentUser.getUsername();
+            password = currentUser.getPassword();
+            urlCurrentUser = "https://api.github.com/users/"+ username;
+        } else {
+            Toast.makeText(getApplicationContext(), "Please retry to connect", Toast.LENGTH_SHORT).show();
+            Intent myIntent = new Intent(AddGistActivity.this, LoginActivity.class);
+            startActivity(myIntent);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public void addGist(View view) {
@@ -56,14 +85,13 @@ public class AddGistActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        System.out.println(object);
 
-        Log.e("TAG", "addGist: " + username + password );
         new PostAPI().execute(username, password, "https://api.github.com/gists", object.toString(), "POST");
 
-        Intent intent = new Intent(AddGistActivity.this, MainActivity.class);
-        intent.putExtra("username", username);
-        intent.putExtra("password", password);
+        Intent intent = new Intent(AddGistActivity.this, ResultSearchActivity.class);
+        Gson gson = new Gson();
+        intent.putExtra("currentUser", gson.toJson(currentUser));
+        intent.putExtra("urlGistsCurrentUser", urlCurrentUser + "/gists");
         startActivity(intent);
     }
 }
